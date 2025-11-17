@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 
 import * as fs from 'fs';
 import * as os from 'os';
@@ -14,13 +14,11 @@ getSystemStats(function(stats) {
   console.log(`Disk: ${stats.disk.used}/${stats.disk.total} (${stats.disk.percentage}%)`);
   console.log(`Uptime: ${Math.floor(stats.uptime / 3600)}h`);
   
-  const config = {
+  saveConfig({
     name: 'system-monitor',
     lastRun: new Date().toISOString(),
     stats: stats
-  };
-  
-  saveConfig(config);
+  });
 });
 
 
@@ -48,6 +46,9 @@ function getCpuInfo() {
   };
 }
 
+/**
+ * Returns some system stats.
+ */
 function getSystemStats(callback) {
   const memInfo = {
     total: os.totalmem(),
@@ -61,7 +62,7 @@ function getSystemStats(callback) {
     const lines = stdout.split('\n');
     const diskData = lines[1].split(/\s+/);
     
-    const result = {
+    callback({
       memory: memInfo,
       disk: {
         total: diskData[1],
@@ -71,12 +72,13 @@ function getSystemStats(callback) {
       },
       uptime: os.uptime(),
       hostname: os.hostname()
-    };
-    
-    callback(result);
+    });
   });
 }
 
+/**
+ * Serialises the provided config into a temporary JSON file.
+ */
 function saveConfig(config) {
   const configPath = '/tmp/system-config.json';
   
